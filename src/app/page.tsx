@@ -5,6 +5,7 @@ import Login from '@/components/Login';
 import Dashboard from '@/components/Dashboard';
 import Settings from '@/components/Settings';
 import { Loader2 } from 'lucide-react';
+import { initClientDb } from '@/lib/clientDb';
 
 type Screen = 'dashboard' | 'settings';
 
@@ -14,15 +15,16 @@ export default function Home() {
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
+    // Initialize LocalStorage database
+    initClientDb();
     checkSession();
   }, []);
 
-  const checkSession = async () => {
+  const checkSession = () => {
     try {
-      const res = await fetch('/api/auth/me');
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data.user);
+      const activeUser = sessionStorage.getItem('tt_active_user');
+      if (activeUser) {
+        setUser(JSON.parse(activeUser));
       } else {
         setUser(null);
       }
@@ -35,11 +37,13 @@ export default function Home() {
 
   const handleLoginSuccess = (loggedInUser: { id: string; username: string }) => {
     setUser(loggedInUser);
+    sessionStorage.setItem('tt_active_user', JSON.stringify(loggedInUser));
     setScreen('dashboard');
   };
 
   const handleLogoutSuccess = () => {
     setUser(null);
+    sessionStorage.removeItem('tt_active_user');
   };
 
   if (checkingSession) {

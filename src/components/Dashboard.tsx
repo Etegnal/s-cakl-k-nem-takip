@@ -9,7 +9,6 @@ import {
   UploadCloud, 
   Settings as SettingsIcon, 
   LogOut, 
-  FileSpreadsheet,
   RefreshCw,
   Bell
 } from 'lucide-react';
@@ -23,6 +22,17 @@ import {
   ResponsiveContainer,
   Legend
 } from 'recharts';
+import * as xlsx from 'xlsx';
+import { 
+  getClientStats, 
+  getClientMachines, 
+  getClientAlerts, 
+  findOrCreateClientMachine, 
+  addClientReading, 
+  addClientAlert,
+  getClientSettings
+} from '@/lib/clientDb';
+import { sendClientAlertEmail } from '@/lib/clientEmail';
 import styles from './Dashboard.module.css';
 
 interface DashboardProps {
@@ -53,9 +63,9 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
   // Fetch readings when selected machine changes
   useEffect(() => {
     if (selectedMachineId) {
-      fetchChartData(selectedMachineId);
+      loadChartData(selectedMachineId);
     }
-  }, [selectedMachineId]);
+  }, [selectedMachineId, machines]);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -64,81 +74,52 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
     }, 5000);
   };
 
-  const refreshAllData = async () => {
+  const refreshAllData = () => {
     setLoading(true);
     try {
-      await Promise.all([
-        fetchStats(),
-        fetchMachines(),
-        fetchAlerts()
-      ]);
+      const currentStats = getClientStats();
+      const currentMachines = getClientMachines();
+      const currentAlerts = getClientAlerts();
+
+      setStats(currentStats);
+      setMachines(currentMachines);
+      setAlerts(currentAlerts);
+
+      if (currentMachines.length > 0 && !selectedMachineId) {
+        setSelectedMachineId(currentMachines[0].id);
+      }
     } catch (err) {
-      console.error('Error refreshing data:', err);
+      console.error('Error refreshing local data:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchStats = async () => {
-    const res = await fetch('/api/dashboard/stats');
-    if (res.ok) {
-      const data = await res.json();
-      setStats(data);
+  const loadChartData = (machineId: string) => {
+    const machine = machines.find(m => m.id === machineId);
+    if (!machine || !machine.readings) {
+      setChartData([]);
+      return;
     }
+
+    // Format timestamps chronologically (reversing to match standard chart timeline)
+    const formatted = [...machine.readings].reverse().map((d: any) => ({
+      ...d,
+      formattedTime: new Date(d.timestamp).toLocaleTimeString('tr-TR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      formattedDate: new Date(d.timestamp).toLocaleDateString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit'
+      })
+    }));
+
+    setChartData(formatted);
   };
 
-  const fetchMachines = async () => {
-    const res = await fetch('/api/machines');
-    if (res.ok) {
-      const data = await res.json();
-      setMachines(data);
-      if (data.length > 0 && !selectedMachineId) {
-        setSelectedMachineId(data[0].id);
-      }
-    }
-  };
-
-  const fetchAlerts = async () => {
-    const res = await fetch('/api/alerts');
-    if (res.ok) {
-      const data = await res.json();
-      setAlerts(data);
-    }
-  };
-
-  const fetchChartData = async (machineId: string) => {
-    const res = await fetch(`/api/readings?machineId=${machineId}&limit=15`);
-    if (res.ok) {
-      const data = await res.json();
-      
-      // Format timestamp to local HH:MM or DD/MM HH:MM
-      const formatted = data.map((d: any) => ({
-        ...d,
-        formattedTime: new Date(d.timestamp).toLocaleTimeString('tr-TR', {
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
-        formattedDate: new Date(d.timestamp).toLocaleDateString('tr-TR', {
-          day: '2-digit',
-          month: '2-digit'
-        })
-      }));
-
-      setChartData(formatted);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      const res = await fetch('/api/auth/logout', { method: 'POST' });
-      if (res.ok) {
-        onLogoutSuccess();
-      } else {
-        showToast('Çıkış yapılamadı.', 'error');
-      }
-    } catch {
-      showToast('Bir ağ hatası oluştu.', 'error');
-    }
+  const handleLogout = () => {
+    onLogoutSuccess();
   };
 
   // Drag and Drop files handlers
@@ -172,7 +153,8 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
     fileInputRef.current?.click();
   };
 
-  const uploadFile = async (file: File) => {
+  // Client-side Excel parsing logic using SheetJS
+  const uploadFile = (file: File) => {
     const validExtensions = ['.xlsx', '.xls'];
     const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
 
@@ -182,42 +164,158 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
     }
 
     setUploading(true);
-    const formData = new FormData();
-    formData.append('file', file);
+    const reader = new FileReader();
 
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+    reader.onload = async (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        // cellDates: true parses dates automatically into JS objects
+        const workbook = xlsx.read(data, { type: 'array', cellDates: true });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const rows = xlsx.utils.sheet_to_json<any>(worksheet, { raw: true });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        showToast(
-          `${data.message || 'Veriler başarıyla yüklendi.'} ${
-            data.alertsCount > 0 ? `(${data.alertsCount} yeni aşım uyarısı tetiklendi!)` : ''
-          }`,
-          data.alertsCount > 0 ? 'error' : 'success'
-        );
-        
-        // Refresh everything
-        await refreshAllData();
-        if (selectedMachineId) {
-          fetchChartData(selectedMachineId);
+        if (rows.length === 0) {
+          showToast('Excel dosyası boş veya okunamadı.', 'error');
+          return;
         }
-      } else {
-        showToast(data.error || 'Dosya işlenirken bir hata oluştu.', 'error');
+
+        const keys = Object.keys(rows[0]);
+        const machineKey = keys.find(k => /device|cihaz|makine|machine|ad|name/i.test(k));
+        const tempKey = keys.find(k => /sicaklik|sıcaklık|isi|ısı|temp|temperature/i.test(k));
+        const humidityKey = keys.find(k => /nem|humid|humidity/i.test(k));
+        const dateKey = keys.find(k => /tarih|zaman|date|time|timestamp/i.test(k));
+
+        if (!machineKey || !tempKey || !humidityKey) {
+          showToast('Geçersiz Excel formatı. Kolonlar: Makine Adı, Sıcaklık ve Nem içermelidir.', 'error');
+          return;
+        }
+
+        let processedCount = 0;
+        let alertsCount = 0;
+        const settings = getClientSettings();
+
+        for (const row of rows) {
+          const rawMachineName = String(row[machineKey] || '').trim();
+          const rawTemp = parseFloat(row[tempKey]);
+          const rawHumidity = parseFloat(row[humidityKey]);
+
+          if (!rawMachineName || isNaN(rawTemp) || isNaN(rawHumidity)) {
+            continue; // Skip invalid row
+          }
+
+          let timestamp = new Date().toISOString();
+          if (dateKey && row[dateKey]) {
+            const val = row[dateKey];
+            if (val instanceof Date) {
+              timestamp = val.toISOString();
+            } else {
+              const parsed = Date.parse(String(val));
+              if (!isNaN(parsed)) {
+                timestamp = new Date(parsed).toISOString();
+              }
+            }
+          }
+
+          // 1. Find or create client-side machine record
+          const machine = findOrCreateClientMachine(rawMachineName);
+
+          // 2. Save reading
+          addClientReading(machine.id, rawTemp, rawHumidity, timestamp, file.name);
+          processedCount++;
+
+          // 3. Check thresholds
+          const threshold = machine.threshold;
+          
+          // Temperature checks
+          let tempBreach = false;
+          let tempLimit = 0;
+          if (rawTemp > threshold.maxTemperature) {
+            tempBreach = true;
+            tempLimit = threshold.maxTemperature;
+          } else if (rawTemp < threshold.minTemperature) {
+            tempBreach = true;
+            tempLimit = threshold.minTemperature;
+          }
+
+          if (tempBreach) {
+            addClientAlert({
+              machineName: rawMachineName,
+              type: 'TEMPERATURE',
+              value: rawTemp,
+              threshold: tempLimit,
+              timestamp,
+              emailSent: true
+            });
+            alertsCount++;
+            
+            // Trigger simulated mail log
+            await sendClientAlertEmail({
+              machineName: rawMachineName,
+              location: machine.location,
+              type: 'TEMPERATURE',
+              value: rawTemp,
+              threshold: tempLimit,
+              timestamp,
+              recipientEmail: settings.alert_email
+            });
+          }
+
+          // Humidity checks
+          let humidBreach = false;
+          let humidLimit = 0;
+          if (rawHumidity > threshold.maxHumidity) {
+            humidBreach = true;
+            humidLimit = threshold.maxHumidity;
+          } else if (rawHumidity < threshold.minHumidity) {
+            humidBreach = true;
+            humidLimit = threshold.minHumidity;
+          }
+
+          if (humidBreach) {
+            addClientAlert({
+              machineName: rawMachineName,
+              type: 'HUMIDITY',
+              value: rawHumidity,
+              threshold: humidLimit,
+              timestamp,
+              emailSent: true
+            });
+            alertsCount++;
+            
+            // Trigger simulated mail log
+            await sendClientAlertEmail({
+              machineName: rawMachineName,
+              location: machine.location,
+              type: 'HUMIDITY',
+              value: rawHumidity,
+              threshold: humidLimit,
+              timestamp,
+              recipientEmail: settings.alert_email
+            });
+          }
+        }
+
+        showToast(
+          `${processedCount} adet ölçüm yerel depolamaya yüklendi. ${
+            alertsCount > 0 ? `(${alertsCount} limit aşımı tespit edildi!)` : ''
+          }`,
+          alertsCount > 0 ? 'error' : 'success'
+        );
+
+        refreshAllData();
+      } catch (err) {
+        console.error('Error reading Excel locally:', err);
+        showToast('Excel dosyası çözümlenirken hata oluştu.', 'error');
+      } finally {
+        setUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
-    } catch {
-      showToast('Dosya yüklenirken sunucuyla bağlantı kurulamadı.', 'error');
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+    };
+
+    reader.readAsArrayBuffer(file);
   };
 
-  // Helper to check if values exceed thresholds
   const getStatus = (machine: any) => {
     if (!machine.readings || machine.readings.length === 0) return 'NO_DATA';
     const lastReading = machine.readings[0];
@@ -250,7 +348,7 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
       <nav className={`${styles.nav} glass-panel`}>
         <div className={styles.brand}>
           <Cpu size={24} style={{ color: 'var(--primary)' }} />
-          <span>Isı & Nem Takip Paneli</span>
+          <span>Isı & Nem Takip Paneli (Static)</span>
         </div>
         <div className={styles.navActions}>
           <span className={styles.userInfo}>Hoş geldiniz, @{user.username}</span>
@@ -545,7 +643,7 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
                       <td style={{ color: 'var(--text-muted)' }}>
                         {new Date(alert.timestamp).toLocaleString('tr-TR')}
                       </td>
-                      <td style={{ fontWeight: 600 }}>{alert.machine.name}</td>
+                      <td style={{ fontWeight: 600 }}>{alert.machineName}</td>
                       <td>
                         <span style={{ 
                           color: isTemp ? 'var(--primary)' : 'var(--accent-emerald)',
@@ -562,15 +660,9 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
                       </td>
                       <td>
                         {alert.emailSent ? (
-                          <span className="badge badge-success">GÖNDERİLDİ</span>
+                          <span className="badge badge-success">SİMÜLE GÖNDERİLDİ</span>
                         ) : (
-                          <span 
-                            className="badge badge-warning" 
-                            title={alert.emailError || 'E-posta gönderilemedi.'}
-                            style={{ cursor: 'help' }}
-                          >
-                            HATA / LOGLANDI
-                          </span>
+                          <span className="badge badge-warning">HATA</span>
                         )}
                       </td>
                     </tr>

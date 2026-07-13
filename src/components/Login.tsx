@@ -14,32 +14,31 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
+    // Simulate network delay for premium experience
+    setTimeout(() => {
+      try {
+        const storedUser = localStorage.getItem('tt_user_username') || 'admin';
+        const storedPass = localStorage.getItem('tt_user_password') || 'Admin123!';
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Giriş yapılamadı.');
+        if (username === storedUser && password === storedPass) {
+          onLoginSuccess({
+            id: 'admin_user',
+            username: storedUser,
+          });
+        } else {
+          setError('Kullanıcı adı veya şifre hatalı.');
+        }
+      } catch {
+        setError('Giriş işlemi sırasında yerel depolama hatası oluştu.');
+      } finally {
+        setLoading(false);
       }
-
-      onLoginSuccess(data.user);
-    } catch (err: any) {
-      setError(err.message || 'Bir hata oluştu.');
-    } finally {
-      setLoading(false);
-    }
+    }, 800);
   };
 
   return (
