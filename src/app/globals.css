@@ -3,14 +3,14 @@
 
 :root {
   /* --- Colors --- */
-  --bg-main: #090d16;
-  --bg-gradient: radial-gradient(circle at 50% 0%, #1e293b 0%, #090d16 100%);
+  --bg-main: #0b0707;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #300a0d 0%, #0b0707 100%);
   --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  --text-muted: #a1a1aa;
   
-  --primary: #3b82f6;
-  --primary-hover: #2563eb;
-  --primary-glow: rgba(59, 130, 246, 0.45);
+  --primary: #CB132B; /* Torku Kırmızı */
+  --primary-hover: #a30f22;
+  --primary-glow: rgba(203, 19, 43, 0.45);
   
   --accent-cyan: #06b6d4;
   --accent-emerald: #10b981;
@@ -18,10 +18,10 @@
   --accent-amber: #f59e0b;
   
   /* --- Glassmorphism --- */
-  --glass-bg: rgba(15, 23, 42, 0.45);
-  --glass-border: rgba(255, 255, 255, 0.07);
+  --glass-bg: rgba(20, 15, 15, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.06);
   --glass-blur: blur(14px);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
   
   /* --- Transitions --- */
   --transition-fast: 0.2s ease;
@@ -29,14 +29,18 @@
 }
 
 [data-theme="light"] {
-  --bg-main: #f1f5f9;
-  --bg-gradient: radial-gradient(circle at 50% 0%, #cbd5e1 0%, #f1f5f9 100%);
-  --text-main: #0f172a;
-  --text-muted: #475569;
+  --bg-main: #fcfbf8; /* Torku Krem/Buğday */
+  --bg-gradient: radial-gradient(circle at 50% 0%, #ede7cf 0%, #fcfbf8 100%);
+  --text-main: #2b2510; /* Koyu kahve/siyah */
+  --text-muted: #6e6750;
   
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(15, 23, 42, 0.08);
-  --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.05);
+  --primary: #CB132B; /* Torku Kırmızı */
+  --primary-hover: #a30f22;
+  --primary-glow: rgba(203, 19, 43, 0.3);
+  
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(94, 87, 41, 0.15); /* Torku Yeşil tonlu */
+  --glass-shadow: 0 8px 32px 0 rgba(94, 87, 41, 0.08);
 }
 
 /* --- Reset & Base Styles --- */

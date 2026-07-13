@@ -53,16 +53,15 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '60px',
-              height: '60px',
-              borderRadius: '16px',
-              background: 'rgba(59, 130, 246, 0.1)',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
-              color: 'var(--primary)',
+              height: '50px',
               marginBottom: '16px',
             }}
           >
-            <Thermometer size={32} />
+            <img 
+              src="/s-cakl-k-nem-takip/torku.png" 
+              alt="Torku Logo" 
+              style={{ height: '50px', objectFit: 'contain' }} 
+            />
           </div>
           <h1 className={styles.title}>Isı & Nem Takip</h1>
           <p className={styles.subtitle}>Sisteme erişmek için kimliğinizi doğrulayın</p>

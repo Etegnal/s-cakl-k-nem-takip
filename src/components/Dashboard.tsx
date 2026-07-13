@@ -406,9 +406,13 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings,
 
       {/* Navigation */}
       <nav className={`${styles.nav} glass-panel`}>
-        <div className={styles.brand}>
-          <Cpu size={24} style={{ color: 'var(--primary)' }} />
-          <span>Isı & Nem Takip Paneli</span>
+        <div className={styles.brand} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img 
+            src="/s-cakl-k-nem-takip/torku.png" 
+            alt="Torku Logo" 
+            style={{ height: '32px', objectFit: 'contain' }} 
+          />
+          <span style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.5px' }}>Isı & Nem Takip Paneli</span>
         </div>
         <div className={styles.navActions} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           

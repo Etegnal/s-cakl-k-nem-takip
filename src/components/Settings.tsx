@@ -204,7 +204,7 @@ export default function Settings({ onBack }: SettingsProps) {
 
       {/* Header */}
       <nav className={`${styles.nav} glass-panel`}>
-        <div className={styles.brand}>
+        <div className={styles.brand} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button 
             onClick={onBack} 
             className="btn btn-secondary" 
@@ -213,6 +213,11 @@ export default function Settings({ onBack }: SettingsProps) {
           >
             <ArrowLeft size={18} />
           </button>
+          <img 
+            src="/s-cakl-k-nem-takip/torku.png" 
+            alt="Torku Logo" 
+            style={{ height: '28px', objectFit: 'contain' }} 
+          />
           <span>Sistem Ayarları</span>
         </div>
         <button onClick={onBack} className="btn btn-secondary" style={{ padding: '8px 16px' }}>
