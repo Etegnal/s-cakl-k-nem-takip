@@ -688,6 +688,91 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
         </div>
       </div>
 
+      {/* Selected Machine History Section */}
+      {(() => {
+        const selectedMachine = machines.find(m => m.id === selectedMachineId);
+        if (!selectedMachine) return null;
+        const readings = selectedMachine.readings || [];
+        const threshold = selectedMachine.threshold;
+
+        return (
+          <div className="glass-panel" style={{ padding: '24px', marginBottom: '24px' }}>
+            <h3 className={styles.sectionTitle} style={{ marginBottom: '20px' }}>
+              📊 {selectedMachine.name} - Geçmiş Zaman Ölçüm Kayıtları ({readings.length} Ölçüm)
+            </h3>
+
+            <div className="custom-table-wrapper" style={{ maxHeight: '350px', overflowY: 'auto' }}>
+              <table className="custom-table">
+                <thead>
+                  <tr>
+                    <th>Ölçüm Zamanı</th>
+                    <th>Sıcaklık (°C)</th>
+                    <th>Sıcaklık Limiti</th>
+                    <th>Nem (%)</th>
+                    <th>Nem Limiti</th>
+                    <th>Kaynak Excel Dosyası</th>
+                    <th>Durum</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {readings.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                        Bu makineye ait henüz ölçüm verisi bulunmamaktadır.
+                      </td>
+                    </tr>
+                  ) : (
+                    readings.map((r: any) => {
+                      const tBreached = threshold && (r.temperature > threshold.maxTemperature || r.temperature < threshold.minTemperature);
+                      const hBreached = threshold && (r.humidity > threshold.maxHumidity || r.humidity < threshold.minHumidity);
+                      const isAnyBreached = tBreached || hBreached;
+
+                      return (
+                        <tr key={r.id}>
+                          <td style={{ color: 'var(--text-muted)' }}>
+                            {new Date(r.timestamp).toLocaleString('tr-TR')}
+                          </td>
+                          <td style={{ 
+                            fontWeight: 600, 
+                            color: tBreached ? 'var(--accent-rose)' : 'inherit',
+                            textShadow: tBreached ? '0 0 10px rgba(244, 63, 94, 0.2)' : 'none'
+                          }}>
+                            {r.temperature}°C
+                          </td>
+                          <td style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                            {threshold ? `${threshold.minTemperature}°C - ${threshold.maxTemperature}°C` : '--'}
+                          </td>
+                          <td style={{ 
+                            fontWeight: 600, 
+                            color: hBreached ? 'var(--accent-rose)' : 'inherit',
+                            textShadow: hBreached ? '0 0 10px rgba(244, 63, 94, 0.2)' : 'none'
+                          }}>
+                            {r.humidity}%
+                          </td>
+                          <td style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                            {threshold ? `${threshold.minHumidity}% - ${threshold.maxHumidity}%` : '--'}
+                          </td>
+                          <td style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
+                            {r.excelFileName || 'Manuel / Bilinmiyor'}
+                          </td>
+                          <td>
+                            {isAnyBreached ? (
+                              <span className="badge badge-danger">LİMİT AŞIMI</span>
+                            ) : (
+                              <span className="badge badge-success">NORMAL</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Bottom Section: Alert Logs */}
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h3 className={styles.sectionTitle} style={{ marginBottom: '20px' }}>
