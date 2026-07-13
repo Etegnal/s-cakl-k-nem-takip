@@ -11,7 +11,9 @@ import {
   LogOut, 
   RefreshCw,
   Bell,
-  Loader2
+  Loader2,
+  Sun,
+  Moon
 } from 'lucide-react';
 import {
   AreaChart,
@@ -41,9 +43,11 @@ interface DashboardProps {
   user: { id: string; username: string };
   onLogoutSuccess: () => void;
   onNavigateToSettings: () => void;
+  theme: 'dark' | 'light';
+  toggleTheme: () => void;
 }
 
-export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings }: DashboardProps) {
+export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings, theme, toggleTheme }: DashboardProps) {
   const [mounted, setMounted] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [machines, setMachines] = useState<any[]>([]);
@@ -438,17 +442,6 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
             <span>{uploading ? 'Yükleniyor...' : 'Excel Yükle'}</span>
           </button>
 
-          {/* Refresh Button */}
-          <button 
-            onClick={refreshAllData} 
-            className="btn btn-secondary" 
-            style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            disabled={loading}
-            title="Verileri Yenile"
-          >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-          </button>
-
           {/* Reset Button */}
           <button 
             onClick={handleReset} 
@@ -467,6 +460,16 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
           </button>
 
           <div style={{ width: '1px', height: '20px', background: 'var(--glass-border)', margin: '0 4px' }}></div>
+
+          {/* Theme Toggle Button */}
+          <button 
+            onClick={toggleTheme} 
+            className="btn btn-secondary" 
+            style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+            title={theme === 'dark' ? 'Aydınlık Mod' : 'Karanlık Mod'}
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
 
           <span className={styles.userInfo} style={{ fontSize: '13px', color: 'var(--text-muted)' }}>@{user.username}</span>
           

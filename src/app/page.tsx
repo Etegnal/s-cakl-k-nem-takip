@@ -13,11 +13,21 @@ export default function Home() {
   const [user, setUser] = useState<{ id: string; username: string } | null>(null);
   const [screen, setScreen] = useState<Screen>('dashboard');
   const [checkingSession, setCheckingSession] = useState(true);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
     // Initialize LocalStorage database
     initClientDb();
     checkSession();
+    
+    // Initialize Theme
+    const savedTheme = localStorage.getItem('tt_theme') as 'dark' | 'light' | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
   }, []);
 
   const checkSession = () => {
@@ -44,6 +54,13 @@ export default function Home() {
   const handleLogoutSuccess = () => {
     setUser(null);
     sessionStorage.removeItem('tt_active_user');
+  };
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('tt_theme', nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
   };
 
   if (checkingSession) {
@@ -79,6 +96,8 @@ export default function Home() {
       user={user} 
       onLogoutSuccess={handleLogoutSuccess} 
       onNavigateToSettings={() => setScreen('settings')} 
+      theme={theme}
+      toggleTheme={toggleTheme}
     />
   );
 }
