@@ -491,7 +491,7 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings,
 
       {/* Stats Cards Grid */}
       <div className={styles.statsGrid}>
-        <div className="glass-card statCard">
+        <div className={`${styles.statCard} glass-card`}>
           <div className={styles.statInfo}>
             <span className={styles.statLabel}>Toplam Cihaz</span>
             <span className={styles.statValue}>{stats?.totalMachines ?? 0}</span>
@@ -501,7 +501,7 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings,
           </div>
         </div>
 
-        <div className="glass-card statCard">
+        <div className={`${styles.statCard} glass-card`}>
           <div className={styles.statInfo}>
             <span className={styles.statLabel}>Ort. Sıcaklık</span>
             <span className={styles.statValue}>
@@ -513,7 +513,7 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings,
           </div>
         </div>
 
-        <div className="glass-card statCard">
+        <div className={`${styles.statCard} glass-card`}>
           <div className={styles.statInfo}>
             <span className={styles.statLabel}>Ort. Nem</span>
             <span className={styles.statValue}>
@@ -525,7 +525,7 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings,
           </div>
         </div>
 
-        <div className="glass-card statCard">
+        <div className={`${styles.statCard} glass-card`}>
           <div className={styles.statInfo}>
             <span className={styles.statLabel}>Aktif Alarmlar (24s)</span>
             <span className={styles.statValue} style={{ color: (stats?.recentAlerts > 0) ? 'var(--accent-rose)' : 'inherit' }}>
