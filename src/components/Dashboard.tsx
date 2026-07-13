@@ -10,7 +10,8 @@ import {
   Settings as SettingsIcon, 
   LogOut, 
   RefreshCw,
-  Bell
+  Bell,
+  Loader2
 } from 'lucide-react';
 import {
   AreaChart,
@@ -396,15 +397,78 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
       <nav className={`${styles.nav} glass-panel`}>
         <div className={styles.brand}>
           <Cpu size={24} style={{ color: 'var(--primary)' }} />
-          <span>Isı & Nem Takip Paneli (Static)</span>
+          <span>Isı & Nem Takip Paneli</span>
         </div>
-        <div className={styles.navActions}>
-          <span className={styles.userInfo}>Hoş geldiniz, @{user.username}</span>
-          <button onClick={onNavigateToSettings} className="btn btn-secondary" style={{ padding: '8px 16px' }}>
+        <div className={styles.navActions} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          
+          {/* Hidden File input */}
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            accept=".xlsx, .xls" 
+            style={{ display: 'none' }} 
+          />
+
+          {/* Compact Excel Upload Button */}
+          <button 
+            onClick={onUploadClick} 
+            className="btn btn-primary" 
+            style={{ 
+              padding: '8px 14px', 
+              fontSize: '13px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              background: 'rgba(59, 130, 246, 0.1)',
+              color: 'var(--primary)',
+              border: '1px solid rgba(59, 130, 246, 0.2)'
+            }}
+            disabled={uploading}
+            title="Excel Veri Dosyası Yükle"
+          >
+            {uploading ? <Loader2 className="animate-spin" size={16} /> : <UploadCloud size={16} />}
+            <span>{uploading ? 'Yükleniyor...' : 'Excel Yükle'}</span>
+          </button>
+
+          {/* Refresh Button */}
+          <button 
+            onClick={refreshAllData} 
+            className="btn btn-secondary" 
+            style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            disabled={loading}
+            title="Verileri Yenile"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+          </button>
+
+          {/* Reset Button */}
+          <button 
+            onClick={handleReset} 
+            className="btn btn-danger" 
+            style={{ 
+              padding: '8px 12px', 
+              fontSize: '13px',
+              background: 'rgba(244, 63, 94, 0.1)', 
+              color: 'var(--accent-rose)', 
+              border: '1px solid rgba(244, 63, 94, 0.2)' 
+            }}
+            disabled={loading}
+            title="Tüm Verileri Sıfırla"
+          >
+            <span>Sıfırla</span>
+          </button>
+
+          <div style={{ width: '1px', height: '20px', background: 'var(--glass-border)', margin: '0 4px' }}></div>
+
+          <span className={styles.userInfo} style={{ fontSize: '13px', color: 'var(--text-muted)' }}>@{user.username}</span>
+          
+          <button onClick={onNavigateToSettings} className="btn btn-secondary" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px' }} title="Sistem Ayarları">
             <SettingsIcon size={16} />
             <span>Ayarlar</span>
           </button>
-          <button onClick={handleLogout} className="btn btn-danger" style={{ padding: '8px 16px' }}>
+          
+          <button onClick={handleLogout} className="btn btn-danger" style={{ padding: '8px 12px', display: 'flex', alignItems: 'center', gap: '6px' }} title="Oturumu Kapat">
             <LogOut size={16} />
             <span>Çıkış</span>
           </button>
@@ -460,56 +524,6 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
           }}>
             <Bell size={24} />
           </div>
-        </div>
-      </div>
-
-      {/* Top Section with Excel Upload & Quick Refresh */}
-      <div className="glass-card" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 700 }}>Excel Veri Yükleme Alanı</h3>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
-              onClick={refreshAllData} 
-              className="btn btn-secondary" 
-              style={{ padding: '8px 16px', fontSize: '13px' }}
-              disabled={loading}
-            >
-              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-              <span>Verileri Yenile</span>
-            </button>
-            <button 
-              onClick={handleReset} 
-              className="btn btn-danger" 
-              style={{ padding: '8px 16px', fontSize: '13px', background: 'var(--accent-rose)', color: '#fff' }}
-              disabled={loading}
-            >
-              <span>Verileri Sıfırla</span>
-            </button>
-          </div>
-        </div>
-
-        <div 
-          className={`${styles.uploadZone} ${dragActive ? styles.uploadZoneActive : ''}`}
-          onDragEnter={handleDrag}
-          onDragOver={handleDrag}
-          onDragLeave={handleDrag}
-          onDrop={handleDrop}
-          onClick={onUploadClick}
-        >
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
-            accept=".xlsx, .xls" 
-            style={{ display: 'none' }} 
-          />
-          <UploadCloud size={40} style={{ color: uploading ? 'var(--accent-emerald)' : 'var(--text-muted)' }} />
-          <p className={styles.uploadTitle}>
-            {uploading ? 'Dosya İşleniyor...' : 'Veri yüklemek için tıklayın veya Excel sürükleyin'}
-          </p>
-          <p className={styles.uploadSubtitle}>
-            Desteklenen dosyalar: <strong>.xlsx, .xls</strong> (Makine Adı, Sıcaklık, Nem sütunları olmalıdır)
-          </p>
         </div>
       </div>
 
