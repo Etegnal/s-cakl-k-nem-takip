@@ -262,9 +262,9 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
               }
             }
             if (dateObj) {
-              // Round to nearest minute to resolve LMT timezone shifts (e.g. 56s offset)
+              // Round to nearest minute and add 57 seconds to compensate for historical LMT timezone offset bugs (e.g. 56s shift)
               const coeff = 1000 * 60;
-              const roundedDate = new Date(Math.round(dateObj.getTime() / coeff) * coeff);
+              const roundedDate = new Date(Math.round((dateObj.getTime() + 57000) / coeff) * coeff);
               timestamp = roundedDate.toISOString();
             }
           }
