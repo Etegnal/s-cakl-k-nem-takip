@@ -117,7 +117,7 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
     }
 
     // Format timestamps chronologically (reversing to match standard chart timeline)
-    const formatted = [...machine.readings].reverse().map((d: any) => ({
+    let formatted = [...machine.readings].reverse().map((d: any) => ({
       ...d,
       formattedTime: new Date(d.timestamp).toLocaleTimeString('tr-TR', {
         hour: '2-digit',
@@ -128,6 +128,36 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
         month: '2-digit'
       })
     }));
+
+    // If there is only one data point, pad it with previous/next hours to draw a beautiful flat horizontal line
+    if (formatted.length === 1) {
+      const singlePoint = formatted[0];
+      const timeMs = new Date(singlePoint.timestamp).getTime();
+      
+      const beforePoint = {
+        ...singlePoint,
+        id: 'dummy-before',
+        timestamp: new Date(timeMs - 60 * 60 * 1000).toISOString(),
+        temperature: singlePoint.temperature,
+        humidity: singlePoint.humidity,
+        formattedTime: new Date(timeMs - 60 * 60 * 1000).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+        formattedDate: new Date(timeMs - 60 * 60 * 1000).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }),
+        isDummy: true
+      };
+      
+      const afterPoint = {
+        ...singlePoint,
+        id: 'dummy-after',
+        timestamp: new Date(timeMs + 60 * 60 * 1000).toISOString(),
+        temperature: singlePoint.temperature,
+        humidity: singlePoint.humidity,
+        formattedTime: new Date(timeMs + 60 * 60 * 1000).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }),
+        formattedDate: new Date(timeMs + 60 * 60 * 1000).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }),
+        isDummy: true
+      };
+      
+      formatted = [beforePoint, singlePoint, afterPoint];
+    }
 
     setChartData(formatted);
   };
@@ -621,6 +651,8 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
                     stroke="var(--primary)" 
                     fillOpacity={1} 
                     fill="url(#colorTemp)" 
+                    dot={{ r: 4, strokeWidth: 1 }}
+                    activeDot={{ r: 7 }}
                   />
                   <Area 
                     name="Nem (%)"
@@ -629,11 +661,30 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
                     stroke="var(--accent-emerald)" 
                     fillOpacity={1} 
                     fill="url(#colorHumidity)" 
+                    dot={{ r: 4, strokeWidth: 1 }}
+                    activeDot={{ r: 7 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
             ) : null}
           </div>
+          {machines.find(m => m.id === selectedMachineId)?.readings?.length === 1 && (
+            <div style={{ 
+              marginTop: '12px', 
+              padding: '10px 14px', 
+              borderRadius: '8px', 
+              background: 'rgba(59, 130, 246, 0.08)', 
+              border: '1px solid rgba(59, 130, 246, 0.15)',
+              color: 'var(--text-muted)',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{ fontSize: '14px' }}>ℹ️</span>
+              <span>Bu cihaza ait tek bir ölçüm bulunduğu için yatay düz çizgi gösterilmektedir. Yeni ölçümler yüklendikçe zaman eğrisi oluşacaktır.</span>
+            </div>
+          )}
         </div>
       </div>
 
