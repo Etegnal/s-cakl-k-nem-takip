@@ -30,7 +30,8 @@ import {
   findOrCreateClientMachine, 
   addClientReading, 
   addClientAlert,
-  getClientSettings
+  getClientSettings,
+  resetClientData
 } from '@/lib/clientDb';
 import { sendClientAlertEmail } from '@/lib/clientEmail';
 import styles from './Dashboard.module.css';
@@ -92,6 +93,19 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
       console.error('Error refreshing local data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    const confirm = window.confirm("Tüm sıcaklık/nem ölçümlerini ve alarm günlüklerini sıfırlamak istediğinize emin misiniz?");
+    if (confirm) {
+      try {
+        resetClientData();
+        showToast("Tüm ölçüm ve alarm verileri başarıyla sıfırlandı.", "success");
+        refreshAllData();
+      } catch (err) {
+        showToast("Sıfırlama işlemi sırasında hata oluştu.", "error");
+      }
     }
   };
 
@@ -423,15 +437,25 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
       <div className="glass-card" style={{ padding: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ fontSize: '16px', fontWeight: 700 }}>Excel Veri Yükleme Alanı</h3>
-          <button 
-            onClick={refreshAllData} 
-            className="btn btn-secondary" 
-            style={{ padding: '8px 16px', fontSize: '13px' }}
-            disabled={loading}
-          >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            <span>Verileri Yenile</span>
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={refreshAllData} 
+              className="btn btn-secondary" 
+              style={{ padding: '8px 16px', fontSize: '13px' }}
+              disabled={loading}
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <span>Verileri Yenile</span>
+            </button>
+            <button 
+              onClick={handleReset} 
+              className="btn btn-danger" 
+              style={{ padding: '8px 16px', fontSize: '13px', background: 'var(--accent-rose)', color: '#fff' }}
+              disabled={loading}
+            >
+              <span>Verileri Sıfırla</span>
+            </button>
+          </div>
         </div>
 
         <div 

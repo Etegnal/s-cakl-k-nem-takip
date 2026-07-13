@@ -244,3 +244,20 @@ export function getClientStats() {
     activeMachines: activeCount
   };
 }
+
+export function resetClientData() {
+  if (typeof window === 'undefined') return;
+  
+  // 1. Clear readings for all machines
+  const machines = getClientMachines();
+  const resetMachines = machines.map(m => ({
+    ...m,
+    readings: []
+  }));
+  localStorage.setItem('tt_machines', JSON.stringify(resetMachines));
+
+  // 2. Clear alerts
+  localStorage.setItem('tt_alerts', JSON.stringify([]));
+
+  console.log('Client-side data reset complete.');
+}
