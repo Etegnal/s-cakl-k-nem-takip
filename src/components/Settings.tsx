@@ -27,7 +27,9 @@ export default function Settings({ onBack }: SettingsProps) {
     smtp_user: 'erenaoyunda@gmail.com',
     smtp_pass: 'fujtdllqonpzocfi',
     smtp_secure: 'false',
-    alert_email: 'erenaoyunda@gmail.com'
+    alert_email: 'erenaoyunda@gmail.com',
+    email_provider: 'smtp' as 'smtp' | 'web3forms',
+    web3forms_key: ''
   });
 
   // Machine thresholds state
@@ -80,7 +82,16 @@ export default function Settings({ onBack }: SettingsProps) {
   const fetchSmtpSettings = () => {
     try {
       const data = getClientSettings();
-      setSmtp(data);
+      setSmtp({
+        smtp_host: data.smtp_host || 'smtp.gmail.com',
+        smtp_port: data.smtp_port || '587',
+        smtp_user: data.smtp_user || 'erenaoyunda@gmail.com',
+        smtp_pass: data.smtp_pass || 'fujtdllqonpzocfi',
+        smtp_secure: data.smtp_secure || 'false',
+        alert_email: data.alert_email || 'erenaoyunda@gmail.com',
+        email_provider: (data.email_provider || 'smtp') as 'smtp' | 'web3forms',
+        web3forms_key: data.web3forms_key || ''
+      });
     } catch (err) {
       console.error('Failed to load SMTP settings:', err);
     }
@@ -115,7 +126,7 @@ export default function Settings({ onBack }: SettingsProps) {
     setTimeout(() => {
       try {
         saveClientSettings(smtp);
-        showToast('SMTP ayarları başarıyla kaydedildi.', 'success');
+        showToast('E-posta ayarları başarıyla kaydedildi.', 'success');
         fetchSmtpSettings();
       } catch {
         showToast('Ayarlar kaydedilemedi.', 'error');
@@ -129,7 +140,7 @@ export default function Settings({ onBack }: SettingsProps) {
     setTestingSmtp(true);
     showToast('Bağlantı test ediliyor, lütfen bekleyin...', 'success');
 
-    // Simulate sending test email in the browser
+    // Simulate sending test email in the browser (or send real if Web3Forms)
     setTimeout(async () => {
       try {
         const result = await sendClientAlertEmail({
@@ -139,16 +150,22 @@ export default function Settings({ onBack }: SettingsProps) {
           value: 45.0,
           threshold: 40.0,
           timestamp: new Date().toISOString(),
-          recipientEmail: smtp.alert_email
+          recipientEmail: smtp.alert_email,
+          provider: smtp.email_provider,
+          web3formsKey: smtp.web3forms_key
         });
 
         if (result.success) {
-          showToast('SMTP Test Başarılı! E-posta alıcı adresine simüle olarak gönderildi.', 'success');
+          if (smtp.email_provider === 'web3forms') {
+            showToast('E-posta Test Başarılı! Gerçek e-posta gelen kutunuza gönderildi. 📬', 'success');
+          } else {
+            showToast('SMTP Test Başarılı! E-posta alıcı adresine simüle olarak gönderildi (Localhost değil).', 'success');
+          }
         } else {
-          showToast(result.error || 'SMTP Test Başarısız.', 'error');
+          showToast(result.error || 'E-posta Test Başarısız.', 'error');
         }
-      } catch {
-        showToast('Bağlantı testi sırasında hata oluştu.', 'error');
+      } catch (err: any) {
+        showToast('Bağlantı testi sırasında hata oluştu: ' + (err.message || ''), 'error');
       } finally {
         setTestingSmtp(false);
       }
@@ -206,91 +223,128 @@ export default function Settings({ onBack }: SettingsProps) {
       {/* Two Column Forms */}
       <div className={styles.detailGrid}>
         
-        {/* Left Column: SMTP Configuration */}
+        {/* Left Column: SMTP / E-posta Configuration */}
         <div className="glass-panel" style={{ padding: '30px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
             <div style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary)', padding: '10px', borderRadius: '10px' }}>
               <Mail size={22} />
             </div>
             <div>
-              <h3 className={styles.sectionTitle} style={{ fontSize: '18px' }}>SMTP E-posta Ayarları</h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Sınır aşım bildirim e-postaları için SMTP sunucusu</p>
+              <h3 className={styles.sectionTitle} style={{ fontSize: '18px' }}>E-posta Ayarları</h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Sınır aşım bildirim e-postaları için sağlayıcı ayarları</p>
             </div>
           </div>
 
           <form onSubmit={saveSmtpSettings} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div className="form-group">
-              <label className="form-label" htmlFor="smtp_host">SMTP Sunucu Adresi (Host)</label>
-              <input
-                id="smtp_host"
-                name="smtp_host"
-                type="text"
+              <label className="form-label" htmlFor="email_provider">E-posta Sağlayıcı (Provider)</label>
+              <select
+                id="email_provider"
+                name="email_provider"
                 className="form-input"
-                placeholder="smtp.gmail.com"
-                value={smtp.smtp_host}
+                value={smtp.email_provider}
                 onChange={handleSmtpChange}
-                required
-              />
+              >
+                <option value="smtp">SMTP Sunucusu (Sadece Yerel Bilgisayarda çalışır)</option>
+                <option value="web3forms">Web3Forms (GitHub Pages'ten GERÇEK E-posta Gönderir! 🚀)</option>
+              </select>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {smtp.email_provider === 'smtp' ? (
+              <>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="smtp_host">SMTP Sunucu Adresi (Host)</label>
+                  <input
+                    id="smtp_host"
+                    name="smtp_host"
+                    type="text"
+                    className="form-input"
+                    placeholder="smtp.gmail.com"
+                    value={smtp.smtp_host}
+                    onChange={handleSmtpChange}
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="smtp_port">Port</label>
+                    <input
+                      id="smtp_port"
+                      name="smtp_port"
+                      type="text"
+                      className="form-input"
+                      placeholder="587"
+                      value={smtp.smtp_port}
+                      onChange={handleSmtpChange}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="smtp_secure">Güvenli Bağlantı (SSL/TLS)</label>
+                    <select
+                      id="smtp_secure"
+                      name="smtp_secure"
+                      className="form-input"
+                      value={smtp.smtp_secure}
+                      onChange={handleSmtpChange}
+                    >
+                      <option value="false">STARTTLS / TLS (Port 587)</option>
+                      <option value="true">SSL (Port 465)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="smtp_user">Kullanıcı Adı (E-posta)</label>
+                  <input
+                    id="smtp_user"
+                    name="smtp_user"
+                    type="email"
+                    className="form-input"
+                    placeholder="ornek@gmail.com"
+                    value={smtp.smtp_user}
+                    onChange={handleSmtpChange}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="smtp_pass">Şifre (SMTP / Uygulama Şifresi)</label>
+                  <input
+                    id="smtp_pass"
+                    name="smtp_pass"
+                    type="password"
+                    className="form-input"
+                    placeholder="••••••••"
+                    value={smtp.smtp_pass}
+                    onChange={handleSmtpChange}
+                  />
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    * Yerel bilgisayarınızda e-posta göndermek için Gmail Uygulama şifrenizi girin.
+                  </span>
+                </div>
+              </>
+            ) : (
               <div className="form-group">
-                <label className="form-label" htmlFor="smtp_port">Port</label>
+                <label className="form-label" htmlFor="web3forms_key">Web3Forms Erişim Anahtarı (Access Key)</label>
                 <input
-                  id="smtp_port"
-                  name="smtp_port"
-                  type="text"
+                  id="web3forms_key"
+                  name="web3forms_key"
+                  type="password"
                   className="form-input"
-                  placeholder="587"
-                  value={smtp.smtp_port}
+                  placeholder="örn: a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6"
+                  value={smtp.web3forms_key || ''}
                   onChange={handleSmtpChange}
                   required
                 />
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.5', marginTop: '4px' }}>
+                  GitHub Pages gibi statik web sunucularında doğrudan Gmail SMTP'si çalıştırılamaz. 
+                  Bu yüzden gerçek e-posta almak için ücretsiz Web3Forms servisi kullanılır. 
+                  Anahtarınız yoksa <a href="https://web3forms.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline', fontWeight: 600 }}>buraya tıklayıp</a> e-postanızı girerek 5 saniyede ücretsiz bir anahtar alabilirsiniz.
+                </span>
               </div>
-              <div className="form-group">
-                <label className="form-label" htmlFor="smtp_secure">Güvenli Bağlantı (SSL/TLS)</label>
-                <select
-                  id="smtp_secure"
-                  name="smtp_secure"
-                  className="form-input"
-                  value={smtp.smtp_secure}
-                  onChange={handleSmtpChange}
-                >
-                  <option value="false">STARTTLS / TLS (Port 587)</option>
-                  <option value="true">SSL (Port 465)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="smtp_user">Kullanıcı Adı (E-posta)</label>
-              <input
-                id="smtp_user"
-                name="smtp_user"
-                type="email"
-                className="form-input"
-                placeholder="ornek@gmail.com"
-                value={smtp.smtp_user}
-                onChange={handleSmtpChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="smtp_pass">Şifre (SMTP / Uygulama Şifresi)</label>
-              <input
-                id="smtp_pass"
-                name="smtp_pass"
-                type="password"
-                className="form-input"
-                placeholder="••••••••"
-                value={smtp.smtp_pass}
-                onChange={handleSmtpChange}
-              />
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                * Şifreniz tarayıcıda güvenli şekilde saklanır.
-              </span>
-            </div>
+            )}
 
             <div className="form-group" style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '16px' }}>
               <label className="form-label" htmlFor="alert_email">Bildirimlerin Gönderileceği Alıcı E-posta</label>

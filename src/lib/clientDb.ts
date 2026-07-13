@@ -40,6 +40,8 @@ export interface SystemSettings {
   smtp_pass: string;
   smtp_secure: string;
   alert_email: string;
+  email_provider: 'smtp' | 'web3forms';
+  web3forms_key: string;
 }
 
 // Check and initialize default data if not exists
@@ -84,7 +86,9 @@ export function initClientDb() {
       smtp_user: 'erenaoyunda@gmail.com',
       smtp_pass: 'fujtdllqonpzocfi',
       smtp_secure: 'false',
-      alert_email: 'erenaoyunda@gmail.com'
+      alert_email: 'erenaoyunda@gmail.com',
+      email_provider: 'smtp',
+      web3forms_key: ''
     };
     localStorage.setItem('tt_settings', JSON.stringify(initialSettings));
 
@@ -198,10 +202,10 @@ export function addClientAlert(alert: Omit<AlertLog, 'id'>) {
 export function getClientSettings(): SystemSettings {
   initClientDb();
   if (typeof window === 'undefined') {
-    return { smtp_host: '', smtp_port: '', smtp_user: '', smtp_pass: '', smtp_secure: '', alert_email: '' };
+    return { smtp_host: '', smtp_port: '', smtp_user: '', smtp_pass: '', smtp_secure: '', alert_email: '', email_provider: 'smtp', web3forms_key: '' };
   }
   const data = localStorage.getItem('tt_settings');
-  return data ? JSON.parse(data) : { smtp_host: '', smtp_port: '', smtp_user: '', smtp_pass: '', smtp_secure: '', alert_email: '' };
+  return data ? JSON.parse(data) : { smtp_host: '', smtp_port: '', smtp_user: '', smtp_pass: '', smtp_secure: '', alert_email: '', email_provider: 'smtp', web3forms_key: '' };
 }
 
 // Save settings

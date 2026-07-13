@@ -257,7 +257,9 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
               value: rawTemp,
               threshold: tempLimit,
               timestamp,
-              recipientEmail: settings.alert_email
+              recipientEmail: settings.alert_email,
+              provider: settings.email_provider,
+              web3formsKey: settings.web3forms_key
             });
           }
 
@@ -291,7 +293,9 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
               value: rawHumidity,
               threshold: humidLimit,
               timestamp,
-              recipientEmail: settings.alert_email
+              recipientEmail: settings.alert_email,
+              provider: settings.email_provider,
+              web3formsKey: settings.web3forms_key
             });
           }
         }
