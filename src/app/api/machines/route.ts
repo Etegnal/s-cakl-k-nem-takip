@@ -46,7 +46,7 @@ export async function PUT(request: Request) {
     }
 
     // Update location and threshold in a transaction
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx: any) => {
       // Update machine
       const m = await tx.machine.update({
         where: { id },
