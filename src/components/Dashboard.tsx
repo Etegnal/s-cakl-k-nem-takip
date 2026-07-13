@@ -252,13 +252,20 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings 
           let timestamp = new Date().toISOString();
           if (dateKey && row[dateKey]) {
             const val = row[dateKey];
+            let dateObj: Date | null = null;
             if (val instanceof Date) {
-              timestamp = val.toISOString();
+              dateObj = val;
             } else {
               const parsed = Date.parse(String(val));
               if (!isNaN(parsed)) {
-                timestamp = new Date(parsed).toISOString();
+                dateObj = new Date(parsed);
               }
+            }
+            if (dateObj) {
+              // Round to nearest minute to resolve LMT timezone shifts (e.g. 56s offset)
+              const coeff = 1000 * 60;
+              const roundedDate = new Date(Math.round(dateObj.getTime() / coeff) * coeff);
+              timestamp = roundedDate.toISOString();
             }
           }
 
