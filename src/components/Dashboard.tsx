@@ -664,10 +664,10 @@ export default function Dashboard({ user, onLogoutSuccess, onNavigateToSettings,
                   <YAxis stroke="var(--text-muted)" fontSize={11} />
                   <Tooltip 
                     contentStyle={{ 
-                      background: 'rgba(15, 23, 42, 0.95)', 
+                      background: 'var(--glass-bg)', 
                       border: '1px solid var(--glass-border)',
                       borderRadius: '8px',
-                      color: '#fff',
+                      color: 'var(--text-main)',
                       fontSize: '13px'
                     }}
                   />

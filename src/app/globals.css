@@ -3,14 +3,14 @@
 
 :root {
   /* --- Colors --- */
-  --bg-main: #0b0707;
-  --bg-gradient: radial-gradient(circle at 50% 0%, #300a0d 0%, #0b0707 100%);
+  --bg-main: #090d16;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #1e293b 0%, #090d16 100%);
   --text-main: #f8fafc;
-  --text-muted: #a1a1aa;
+  --text-muted: #94a3b8;
   
-  --primary: #CB132B; /* Torku Kırmızı */
-  --primary-hover: #a30f22;
-  --primary-glow: rgba(203, 19, 43, 0.45);
+  --primary: #3b82f6; /* Original Blue */
+  --primary-hover: #2563eb;
+  --primary-glow: rgba(59, 130, 246, 0.45);
   
   --accent-cyan: #06b6d4;
   --accent-emerald: #10b981;
@@ -18,10 +18,10 @@
   --accent-amber: #f59e0b;
   
   /* --- Glassmorphism --- */
-  --glass-bg: rgba(20, 15, 15, 0.45);
-  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-bg: rgba(15, 23, 42, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.07);
   --glass-blur: blur(14px);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
   
   /* --- Transitions --- */
   --transition-fast: 0.2s ease;
@@ -38,7 +38,7 @@
   --primary-hover: #a30f22;
   --primary-glow: rgba(203, 19, 43, 0.3);
   
-  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-bg: #ffffff;
   --glass-border: rgba(94, 87, 41, 0.15); /* Torku Yeşil tonlu */
   --glass-shadow: 0 8px 32px 0 rgba(94, 87, 41, 0.08);
 }
@@ -92,7 +92,7 @@ a {
 }
 
 .glass-card {
-  background: rgba(30, 41, 59, 0.35);
+  background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -104,8 +104,8 @@ a {
 
 .glass-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+  border-color: var(--primary);
+  box-shadow: var(--glass-shadow);
 }
 
 /* --- Custom Inputs & Forms --- */
@@ -309,4 +309,70 @@ a {
   border-radius: 50%;
   box-shadow: 0 0 8px var(--accent-rose);
   animation: pulse-glow 2s infinite ease-in-out;
+}
+
+/* --- Light Mode Specific overrides to ensure 100% legibility and high contrast --- */
+[data-theme="light"] .glass-panel {
+  background: var(--glass-bg);
+  box-shadow: var(--glass-shadow);
+  border-color: var(--glass-border);
+}
+
+[data-theme="light"] .form-input {
+  background: #ffffff;
+  color: var(--text-main);
+  border-color: var(--glass-border);
+}
+
+[data-theme="light"] .form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+[data-theme="light"] .custom-table th {
+  background: #ede7cf; /* Wheat background for tables to align with brand */
+  color: #5e5729; /* Costa del Sol Torku Green for headers */
+  border-bottom-color: var(--glass-border);
+}
+
+[data-theme="light"] .custom-table td {
+  border-bottom-color: var(--glass-border);
+  color: var(--text-main);
+}
+
+[data-theme="light"] .custom-table tr:hover {
+  background-color: rgba(94, 87, 41, 0.05); /* Soft wheat green hover */
+}
+
+[data-theme="light"] .btn-secondary {
+  background: #ffffff;
+  color: var(--text-main);
+  border-color: var(--glass-border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .btn-secondary:hover {
+  background: #f1f5f9;
+  border-color: rgba(94, 87, 41, 0.3);
+}
+
+[data-theme="light"] select.form-input {
+  background: #ffffff;
+  color: var(--text-main);
+}
+
+/* Ensure all text classes are fully legible in light mode */
+[data-theme="light"] [class*="userInfo"] {
+  color: var(--text-muted) !important;
+}
+
+[data-theme="light"] table, 
+[data-theme="light"] th, 
+[data-theme="light"] td,
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] span,
+[data-theme="light"] p {
+  text-shadow: none !important;
 }
